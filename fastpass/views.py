@@ -1,11 +1,11 @@
-from datetime import date
-
 from django.contrib import messages
+from django.db import IntegrityError
 from django.db.models import Avg, Count
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from .forms import FastPassBookingForm, GuestLookupForm
-from .models import Attraction, FastPass, Guest, ThemeZone
+from .models import Attraction, FastPass, Guest, ThemeZone, TimeSlot
 
 
 def home(request):
@@ -85,6 +85,7 @@ def guest_login(request):
                 messages.error(request, 'No guest found with that email.')
             else:
                 request.session['guest_id'] = guest.id
+                request.session.modified = True
                 messages.success(
                     request,
                     f'Welcome back, {guest.first_name}!',
@@ -97,7 +98,8 @@ def guest_login(request):
 
 def guest_dashboard(request, guest_id):
     guest = get_object_or_404(Guest, id=guest_id)
-    todays_passes = guest.fastpasses.filter(booking_date=date.today()).order_by(
+    today = timezone.localdate()
+    todays_passes = guest.fastpasses.filter(booking_date=today).order_by(
         'time_slot__start_time'
     )
     confirmed_count = todays_passes.filter(status='confirmed').count()
@@ -118,14 +120,23 @@ def book_fastpass(request, attraction_id):
         return redirect('fastpass:guest_login')
 
     guest = get_object_or_404(Guest, id=guest_id)
+    today = timezone.localdate()
 
     if not attraction.fastpass_enabled:
         messages.error(request, "This attraction doesn't offer FastPass.")
         return redirect('fastpass:attraction_detail', pk=attraction.id)
 
+    slot_qs = TimeSlot.objects.filter(attraction=attraction, is_active=True)
+    if not slot_qs.exists():
+        messages.error(
+            request,
+            'No FastPass time slots are available for this attraction yet.',
+        )
+        return redirect('fastpass:attraction_detail', pk=attraction.id)
+
     todays_count = FastPass.objects.filter(
         guest=guest,
-        booking_date=date.today(),
+        booking_date=today,
         status='confirmed',
     ).count()
     if todays_count >= guest.daily_fastpass_limit:
@@ -138,7 +149,7 @@ def book_fastpass(request, attraction_id):
     already_booked = FastPass.objects.filter(
         guest=guest,
         attraction=attraction,
-        booking_date=date.today(),
+        booking_date=today,
     ).exists()
     if already_booked:
         messages.warning(
@@ -151,21 +162,34 @@ def book_fastpass(request, attraction_id):
         form = FastPassBookingForm(attraction, request.POST)
         if form.is_valid():
             time_slot = form.cleaned_data['time_slot']
-            FastPass.objects.create(
-                guest=guest,
-                attraction=attraction,
-                time_slot=time_slot,
-                booking_date=date.today(),
-                status=FastPass.CONFIRMED,
-            )
-            messages.success(
+            try:
+                FastPass.objects.create(
+                    guest=guest,
+                    attraction=attraction,
+                    time_slot=time_slot,
+                    booking_date=today,
+                    status=FastPass.CONFIRMED,
+                )
+            except IntegrityError:
+                messages.error(
+                    request,
+                    'That booking could not be saved (it may already exist). '
+                    'Refresh and try again.',
+                )
+            else:
+                messages.success(
+                    request,
+                    (
+                        f'FastPass booked for {attraction.name} at '
+                        f'{time_slot.start_time.strftime("%I:%M %p")}!'
+                    ),
+                )
+                return redirect('fastpass:guest_dashboard', guest_id=guest.id)
+        else:
+            messages.error(
                 request,
-                (
-                    f'FastPass booked for {attraction.name} at '
-                    f'{time_slot.start_time.strftime("%I:%M %p")}!'
-                ),
+                'Please choose a valid time slot from the list, then confirm.',
             )
-            return redirect('fastpass:guest_dashboard', guest_id=guest.id)
     else:
         form = FastPassBookingForm(attraction)
 

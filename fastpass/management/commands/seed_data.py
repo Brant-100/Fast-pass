@@ -111,19 +111,8 @@ class Command(BaseCommand):
             )
             self.stdout.write(self.style.SUCCESS(f'Guest: {fn} {ln}'))
 
-        ride_names = [
-            "Speeder Bike Chase",
-            "AT-ST Rampage Coaster",
-            "Wicket's Wild Treehouse Drop",
-        ]
-        for ride_name in ride_names:
-            try:
-                attraction = Attraction.objects.get(name=ride_name)
-            except Attraction.DoesNotExist:
-                self.stdout.write(
-                    self.style.WARNING(f'Skip slots — not found: {ride_name}')
-                )
-                continue
+        # Time slots for every attraction that offers FastPass (not just a demo subset).
+        for attraction in Attraction.objects.filter(fastpass_enabled=True).order_by('name'):
             for start, end in SLOT_TIMES:
                 TimeSlot.objects.update_or_create(
                     attraction=attraction,
@@ -134,6 +123,6 @@ class Command(BaseCommand):
                         'is_active': True,
                     },
                 )
-            self.stdout.write(self.style.SUCCESS(f'Time slots for: {ride_name}'))
+            self.stdout.write(self.style.SUCCESS(f'Time slots for: {attraction.name}'))
 
         self.stdout.write(self.style.SUCCESS('Seed complete.'))

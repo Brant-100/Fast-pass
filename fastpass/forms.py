@@ -17,8 +17,9 @@ class FastPassBookingForm(forms.Form):
     time_slot = forms.ModelChoiceField(
         queryset=TimeSlot.objects.none(),
         label='Select Time',
-        widget=forms.RadioSelect,
+        widget=forms.Select(attrs={'class': 'form-input'}),
         empty_label=None,
+        help_text='Pick one available slot, then confirm.',
     )
 
     def __init__(self, attraction, *args, **kwargs):

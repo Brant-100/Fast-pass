@@ -120,7 +120,9 @@ class Command(BaseCommand):
             try:
                 attraction = Attraction.objects.get(name=ride_name)
             except Attraction.DoesNotExist:
-                self.stdout.write(self.style.WARNING(f'Skip slots — not found: {ride_name}'))
+                self.stdout.write(
+                    self.style.WARNING(f'Skip slots — not found: {ride_name}')
+                )
                 continue
             for start, end in SLOT_TIMES:
                 TimeSlot.objects.update_or_create(

@@ -1,0 +1,29 @@
+{% extends 'fastpass/base.html' %}
+
+{% block title %}{{ zone.name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <p><a href="{% url 'fastpass:zone_list' %}">← All zones</a></p>
+    <h2 style="margin-top: 8px;">{{ zone.name }}</h2>
+    <p>{{ zone.description }}</p>
+</div>
+
+<div class="card">
+    <h3>Attractions</h3>
+    <div class="grid" style="margin-top: 12px;">
+        {% for a in attractions %}
+        <div style="padding: 14px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+            <strong><a href="{% url 'fastpass:attraction_detail' a.pk %}">{{ a.name }}</a></strong>
+            <p style="margin: 6px 0 0 0;">
+                <span class="wait-badge {% if a.current_wait_minutes < 30 %}wait-short{% elif a.current_wait_minutes < 60 %}wait-medium{% else %}wait-long{% endif %}">
+                    {{ a.current_wait_minutes }} min
+                </span>
+            </p>
+        </div>
+        {% empty %}
+        <p>No attractions operating in this zone.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

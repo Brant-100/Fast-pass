@@ -1,0 +1,28 @@
+{% extends 'fastpass/base.html' %}
+
+{% block title %}My FastPasses{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Hello, {{ guest.first_name }}</h2>
+    <p>{{ guest.get_membership_tier_display }} · {{ guest.email }}</p>
+    <p>FastPasses remaining today: <strong>{{ remaining_passes }}</strong> (of {{ guest.daily_fastpass_limit }})</p>
+</div>
+
+<div class="card">
+    <h3>Today's FastPasses</h3>
+    {% if todays_passes %}
+    <ul style="list-style: none; padding: 0;">
+        {% for fp in todays_passes %}
+        <li style="padding: 12px 0; border-bottom: 1px solid rgba(144,238,144,0.15);">
+            <strong>{{ fp.attraction.name }}</strong><br>
+            {{ fp.time_slot.start_time|time:"g:i A" }} · {{ fp.get_status_display }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No FastPasses booked for today yet.</p>
+    {% endif %}
+    <p style="margin-top: 16px;"><a href="{% url 'fastpass:attraction_list' %}">Browse attractions</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'fastpass/base.html' %}
+
+{% block title %}Short waits{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Rides under 30 minutes</h2>
+    <p>Operational rides only, sorted by current wait.</p>
+    <ul style="list-style: none; padding: 0; margin-top: 16px;">
+        {% for ride in rides %}
+        <li style="padding: 12px 0; border-bottom: 1px solid rgba(144,238,144,0.2);">
+            <a href="{% url 'fastpass:attraction_detail' ride.pk %}"><strong>{{ ride.name }}</strong></a>
+            — {{ ride.zone.name }} · <span class="wait-short">{{ ride.current_wait_minutes }} min</span>
+        </li>
+        {% empty %}
+        <li>No rides under 30 minutes right now.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

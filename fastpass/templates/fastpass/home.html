@@ -1,0 +1,38 @@
+{% extends 'fastpass/base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Welcome to Endor Adventures</h2>
+    <p>Plan your day and skip the lines with FastPass.</p>
+    <div class="grid" style="margin-top: 20px;">
+        <div>
+            <div class="stat">{{ zone_count }}</div>
+            <p>Open zones</p>
+        </div>
+        <div>
+            <div class="stat">{{ attraction_count }}</div>
+            <p>Operating attractions</p>
+        </div>
+        <div>
+            <div class="stat">{% if avg_wait %}{{ avg_wait|floatformat:0 }}{% else %}—{% endif %}</div>
+            <p>Avg. ride wait (min)</p>
+        </div>
+    </div>
+</div>
+
+{% if featured %}
+<div class="card">
+    <h3>Featured (shortest waits)</h3>
+    <div class="grid" style="margin-top: 15px;">
+        {% for a in featured %}
+        <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+            <strong><a href="{% url 'fastpass:attraction_detail' a.pk %}">{{ a.name }}</a></strong>
+            <p style="margin: 8px 0 0 0; font-size: 0.9rem;">{{ a.zone.name }} · {{ a.current_wait_minutes }} min wait</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

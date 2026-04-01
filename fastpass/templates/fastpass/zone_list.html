@@ -1,0 +1,20 @@
+{% extends 'fastpass/base.html' %}
+
+{% block title %}Theme zones{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Theme zones</h2>
+    <div class="grid" style="margin-top: 16px;">
+        {% for zone in zones %}
+        <div style="padding: 16px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+            <h3 style="margin-top: 0;"><a href="{% url 'fastpass:zone_detail' zone.id %}">{{ zone.name }}</a></h3>
+            <p>{{ zone.description|truncatewords:25 }}</p>
+            <p style="color: #90EE90;">{{ zone.num_attractions }} attraction{{ zone.num_attractions|pluralize }}</p>
+        </div>
+        {% empty %}
+        <p>No zones open right now.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'fastpass/base.html' %}
+
+{% block title %}Guest login{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Guest login</h2>
+    <p>Enter the email you used when registering your park pass.</p>
+    <form method="post" style="margin-top: 20px;">
+        {% csrf_token %}
+        <p>
+            <label for="id_email">{{ form.email.label }}</label><br>
+            {{ form.email }}
+        </p>
+        {{ form.email.errors }}
+        <button type="submit">Continue</button>
+    </form>
+</div>
+{% endblock %}

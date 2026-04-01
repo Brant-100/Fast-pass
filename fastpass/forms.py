@@ -1,28 +1,29 @@
 from django import forms
+
 from .models import TimeSlot
 
 
 class GuestLookupForm(forms.Form):
     email = forms.EmailField(
-        label="Your Email",
+        label='Your Email',
         widget=forms.EmailInput(attrs={
             'placeholder': 'Enter your email address',
-            'class': 'form-input'
-        })
+            'class': 'form-input',
+        }),
     )
 
 
 class FastPassBookingForm(forms.Form):
     time_slot = forms.ModelChoiceField(
         queryset=TimeSlot.objects.none(),
-        label="Select Time",
+        label='Select Time',
         widget=forms.RadioSelect,
-        empty_label=None
+        empty_label=None,
     )
 
     def __init__(self, attraction, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['time_slot'].queryset = TimeSlot.objects.filter(
             attraction=attraction,
-            is_active=True
+            is_active=True,
         ).order_by('start_time')

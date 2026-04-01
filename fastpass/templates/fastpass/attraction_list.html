@@ -1,0 +1,43 @@
+{% extends 'fastpass/base.html' %}
+
+{% block title %}Attractions{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>All attractions</h2>
+    <form method="get" style="margin: 16px 0; display: flex; flex-wrap: wrap; gap: 12px; align-items: end;">
+        <div>
+            <label for="zone">Zone</label><br>
+            <select name="zone" id="zone" class="form-input" style="max-width: 220px;">
+                <option value="">Any</option>
+                {% for z in zones %}
+                <option value="{{ z.id }}" {% if request.GET.zone == z.id|stringformat:"s" %}selected{% endif %}>{{ z.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="type">Type</label><br>
+            <select name="type" id="type" class="form-input" style="max-width: 160px;">
+                <option value="">Any</option>
+                <option value="ride" {% if request.GET.type == 'ride' %}selected{% endif %}>Ride</option>
+                <option value="show" {% if request.GET.type == 'show' %}selected{% endif %}>Show</option>
+                <option value="experience" {% if request.GET.type == 'experience' %}selected{% endif %}>Experience</option>
+                <option value="dining" {% if request.GET.type == 'dining' %}selected{% endif %}>Dining</option>
+            </select>
+        </div>
+        <button type="submit">Filter</button>
+    </form>
+
+    <div class="grid">
+        {% for a in attractions %}
+        <div style="padding: 14px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+            <strong><a href="{% url 'fastpass:attraction_detail' a.pk %}">{{ a.name }}</a></strong>
+            <p style="margin: 6px 0 0 0; font-size: 0.9rem;">{{ a.zone.name }} · {{ a.get_attraction_type_display }}</p>
+            <p><span class="{% if a.current_wait_minutes < 30 %}wait-short{% elif a.current_wait_minutes < 60 %}wait-medium{% else %}wait-long{% endif %}">{{ a.current_wait_minutes }} min wait</span></p>
+        </div>
+        {% empty %}
+        <p>No attractions match.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

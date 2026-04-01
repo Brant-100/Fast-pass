@@ -1,0 +1,60 @@
+{% extends 'fastpass/base.html' %}
+
+{% block title %}{{ attraction.name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <p><a href="{% url 'fastpass:zone_detail' attraction.zone.id %}"
+          style="color: #90EE90;">← Back to {{ attraction.zone.name }}</a></p>
+
+    <h2 style="margin-top: 15px;">{{ attraction.name }}</h2>
+    <p>{{ attraction.zone.name }} | {{ attraction.get_attraction_type_display }}</p>
+
+    <p style="margin: 20px 0;">{{ attraction.description }}</p>
+
+    <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+        <div>
+            <strong>Current Wait</strong><br>
+            <span class="wait-badge {% if attraction.current_wait_minutes < 30 %}wait-short{% elif attraction.current_wait_minutes < 60 %}wait-medium{% else %}wait-long{% endif %}" style="font-size: 1.3em;">
+                {{ attraction.current_wait_minutes }} min
+            </span>
+        </div>
+        <div>
+            <strong>Duration</strong><br>
+            <span style="font-size: 1.3em;">{{ attraction.duration_minutes }} min</span>
+        </div>
+        <div>
+            <strong>Thrill Level</strong><br>
+            <span style="font-size: 1.3em;">{{ attraction.get_thrill_level_display }}</span>
+        </div>
+    </div>
+
+    {% if attraction.fastpass_enabled %}
+    <div style="margin-top: 30px;">
+        <a href="{% url 'fastpass:book_fastpass' attraction.id %}" style="
+            display: inline-block;
+            padding: 15px 30px;
+            background: #FFD700;
+            color: black;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        ">⚡ Book FastPass</a>
+    </div>
+    {% endif %}
+</div>
+
+{% if time_slots %}
+<div class="card">
+    <h3>Today's Time Slots</h3>
+    <div class="grid" style="margin-top: 15px;">
+        {% for slot in time_slots %}
+        <div style="padding: 15px; background: rgba(255,255,255,0.1); border-radius: 5px;">
+            <strong>{{ slot.start_time|time:"g:i A" }}</strong>
+            <span style="color: #90EE90;">Available</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

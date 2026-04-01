@@ -1,0 +1,137 @@
+from datetime import time
+
+from django.core.management.base import BaseCommand
+
+from fastpass.models import Attraction, Guest, ThemeZone, TimeSlot
+
+
+ZONES = [
+    {
+        'name': 'Forest of Endor',
+        'description': 'Towering redwoods and ancient trees. Home to treehouse attractions.',
+        'is_open': True,
+    },
+    {
+        'name': 'Ewok Village',
+        'description': 'The heart of Ewok civilization! Family-friendly rides.',
+        'is_open': True,
+    },
+    {
+        'name': 'Imperial Ruins',
+        'description': 'Remnants of the fallen Empire. Thrill rides ahead!',
+        'is_open': True,
+    },
+    {
+        'name': 'Speeder Bike Canyon',
+        'description': 'High-speed adventures through narrow forest paths.',
+        'is_open': True,
+    },
+    {
+        'name': 'Bright Tree Grove',
+        'description': 'Entertainment and dining district. Live shows!',
+        'is_open': True,
+    },
+]
+
+ATTRACTIONS = [
+    ('Wicket\'s Wild Treehouse Drop', 'Forest of Endor', 'ride', 3, 110, 25),
+    ('Canopy Rope Bridge Walk', 'Forest of Endor', 'experience', 1, 0, 15),
+    ('Gorax Cave Expedition', 'Forest of Endor', 'ride', 3, 120, 40),
+    ('Log Drum Spinner', 'Ewok Village', 'ride', 2, 0, 35),
+    ('Chief Chirpa\'s Storytelling', 'Ewok Village', 'show', 1, 0, 10),
+    ('Ewok Cooking Class', 'Ewok Village', 'experience', 1, 0, 20),
+    ('AT-ST Rampage Coaster', 'Imperial Ruins', 'ride', 4, 130, 45),
+    ('Bunker Escape Room', 'Imperial Ruins', 'experience', 2, 0, 30),
+    ('Speeder Bike Chase', 'Speeder Bike Canyon', 'ride', 4, 120, 55),
+    ('Scout Trooper Training', 'Speeder Bike Canyon', 'experience', 3, 100, 18),
+    ('Yub Nub Celebration Show', 'Bright Tree Grove', 'show', 1, 0, 12),
+    ('Endor Cantina', 'Bright Tree Grove', 'dining', 1, 0, 22),
+]
+
+GUESTS = [
+    ('Luke', 'Skywalker', 'luke@rebellion.org', 'gold', 172),
+    ('Leia', 'Organa', 'leia@rebellion.org', 'platinum', 150),
+    ('Han', 'Solo', 'han@falcon.com', 'silver', 180),
+    ('Wicket', 'Warrick', 'wicket@endor.net', 'platinum', 80),
+    ('Chewie', 'Wookiee', 'chewie@kashyyyk.com', 'standard', 228),
+]
+
+SLOT_TIMES = [
+    (time(9, 0), time(9, 30)),
+    (time(10, 0), time(10, 30)),
+    (time(11, 0), time(11, 30)),
+    (time(13, 0), time(13, 30)),
+    (time(14, 0), time(14, 30)),
+    (time(15, 0), time(15, 30)),
+]
+
+
+class Command(BaseCommand):
+    help = 'Seed ThemeZones, Attractions, Guests, and TimeSlots for Endor Adventures.'
+
+    def handle(self, *args, **options):
+        zone_map = {}
+        for z in ZONES:
+            zone, _ = ThemeZone.objects.update_or_create(
+                name=z['name'],
+                defaults={'description': z['description'], 'is_open': z['is_open']},
+            )
+            zone_map[z['name']] = zone
+            self.stdout.write(self.style.SUCCESS(f'Zone: {zone.name}'))
+
+        for name, zone_name, atype, thrill, min_h, wait in ATTRACTIONS:
+            zone = zone_map[zone_name]
+            desc = f'Experience {name} in {zone_name}.'
+            Attraction.objects.update_or_create(
+                name=name,
+                defaults={
+                    'description': desc,
+                    'attraction_type': atype,
+                    'zone': zone,
+                    'thrill_level': thrill,
+                    'min_height_cm': min_h,
+                    'duration_minutes': 5,
+                    'current_wait_minutes': wait,
+                    'is_operational': True,
+                    'fastpass_enabled': True,
+                },
+            )
+            self.stdout.write(self.style.SUCCESS(f'Attraction: {name}'))
+
+        for fn, ln, email, tier, height in GUESTS:
+            Guest.objects.update_or_create(
+                email=email,
+                defaults={
+                    'first_name': fn,
+                    'last_name': ln,
+                    'membership_tier': tier,
+                    'height_cm': height,
+                    'daily_fastpass_limit': 3,
+                },
+            )
+            self.stdout.write(self.style.SUCCESS(f'Guest: {fn} {ln}'))
+
+        ride_names = [
+            "Speeder Bike Chase",
+            "AT-ST Rampage Coaster",
+            "Wicket's Wild Treehouse Drop",
+        ]
+        for ride_name in ride_names:
+            try:
+                attraction = Attraction.objects.get(name=ride_name)
+            except Attraction.DoesNotExist:
+                self.stdout.write(self.style.WARNING(f'Skip slots — not found: {ride_name}'))
+                continue
+            for start, end in SLOT_TIMES:
+                TimeSlot.objects.update_or_create(
+                    attraction=attraction,
+                    start_time=start,
+                    defaults={
+                        'end_time': end,
+                        'max_fastpasses': 25,
+                        'is_active': True,
+                    },
+                )
+            self.stdout.write(self.style.SUCCESS(f'Time slots for: {ride_name}'))
+
+        self.stdout.write(self.style.SUCCESS('Seed complete.'))
